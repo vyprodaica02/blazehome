@@ -1,0 +1,130 @@
+﻿@page "/"
+@using MudBlazorTemplates1.IServices;
+@using TodoList.Entity;
+@inject IApiUser dataUser;
+@using System.Net.Http.Json;
+<PageTitle>Index</PageTitle>
+
+<MudPaper>
+    <MudContainer Fixed="true">
+        <MudButton Variant="Variant.Filled" OnClick="@(() => OpenFormCreate())">Thêm</MudButton>
+        <MudTable Items="@userList" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped" @bind-SelectedItem="selectedItem1">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">TodoList</MudText>
+                <MudSpacer />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>STT</MudTh>
+                <MudTh>Tên</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Ngày Sinh</MudTh>
+                <MudTh>Sửa</MudTh>
+                <MudTh>Xóa</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="STT">@($"{userList.IndexOf(@context) + 1}")</MudTd>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <MudTd DataLabel="NgaySinh">@context.NgaySinh.ToString("MM/dd/yyyy")</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="@(() => EditUser(@context))" />
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Secondary" Size="Size.Small" OnClick="@(() => DeleteUser(@context))" />
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+            <FormThemUser showForm="@showForm" OnFormClosed="@(() => OnOverlayClosed())" OnUserCreated="ReloadTable" />
+            <FormSuaUser showFormSua="@showFormSua" OnFormSuaClosed="@(() => OnOverlaySuaClosed())" EditUserModel="EditUserModel" />
+        </MudContainer>
+    </MudPaper>
+
+    @code {
+    //table
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    private string searchString1 = "";
+    private User selectedItem1 = null;
+    private HashSet<User> selectedItems = new HashSet<User>();
+
+
+
+    private bool FilterFunc(User element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private bool showFormSua = false;
+    public User EditUserModel;
+    private void EditUser(User user)
+    {
+        this.showFormSua = true;
+        EditUserModel = user;
+
+    }
+
+    private void OnOverlaySuaClosed()
+    {
+        this.showFormSua = false;
+        RefreshData();
+    }
+
+    private async void DeleteUser(User user)
+    {
+        await dataUser.DeleteUser(user.Id);
+        OnInitializedAsync();
+    }
+    //
+
+    //
+    private bool showForm = false;
+    private void OpenFormCreate()
+    {
+        this.showForm = true;
+    }
+
+
+    private void OnOverlayClosed()
+    {
+        this.showForm = false;
+        RefreshData();
+    }
+    //
+    private List<User> userList = new List<User>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetDataUser();
+
+    }
+
+    private async void ReloadTable()
+    {
+        this.showForm = false;
+        await RefreshData();
+    }
+
+    private async Task RefreshData()
+    {
+        await GetDataUser();
+    }
+
+    private async Task GetDataUser()
+    {
+        var queryableUsers = await dataUser.GetDataUsers();
+        userList = queryableUsers.ToList();
+    }
+   
+}

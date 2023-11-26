@@ -1,0 +1,85 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using MudBlazorTemplates1.IServices;
+@using TodoList.Entity
+
+@inject IApiUser _createUser;
+<MudOverlay @bind-Visible="@showForm" DarkBackground="true" OnClick="close">
+    <EditForm Model="@model" @onclick:stopPropagation="true" width="100%">
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem>
+                <MudCard Style="width:300px; padding:20px;" lg="12" sm="7">
+                    <MudTextField Label="First Name" @bind-Value="model.Username" For="@(() => model.Username)" />
+                    <MudTextField Label="Email" Class="mt-3"
+                    @bind-Value="model.Email" For="@(() => model.Email)" />
+                    <MudDatePicker @bind-Date="model.Date" Label="Parameter Label" />
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="createUser" Class="ml-auto">Thêm</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudOverlay>
+
+
+@code {
+    User user = new User();
+
+    RegisterAccountForm model = new RegisterAccountForm();
+
+    [Parameter]
+    public bool showForm { get; set; }
+
+
+    [Parameter]
+    public EventCallback OnFormClosed { get; set; }
+
+    [Parameter]
+    public EventCallback OnUserCreated { get; set; }
+
+    public class RegisterAccountForm
+    {
+        [Required]
+        public string Username { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+        public DateTime? Date { get; set; }
+
+    }
+
+    private void OnOverlayClosed(EventArgs args)
+    {
+        showForm = false;
+        OnFormClosed.InvokeAsync();
+    }
+    
+    private void close()
+    {
+        showForm = false;
+        OnFormClosed.InvokeAsync();
+    }
+
+    private User ConvertToUser(RegisterAccountForm registerAccountForm)
+    {
+        User user = new User
+            {
+                Name = registerAccountForm.Username,
+                Email = registerAccountForm.Email,
+                NgaySinh = registerAccountForm.Date ?? DateTime.MinValue,
+            };
+
+        return user;
+    }
+
+    private async Task createUser()
+    {
+        User user = ConvertToUser(model);
+        await _createUser.CreatUser(user);
+        await OnUserCreated.InvokeAsync();
+
+    }
+    
+}

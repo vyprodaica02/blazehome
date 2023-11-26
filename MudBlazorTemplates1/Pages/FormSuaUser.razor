@@ -1,0 +1,55 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using MudBlazorTemplates1.IServices;
+@using TodoList.Entity
+
+@inject IApiUser _createUser;
+<MudOverlay @bind-Visible="@showFormSua" DarkBackground="true" OnClick="close">
+    <EditForm Model="@EditUserModel" @onclick:stopPropagation="true">
+        <DataAnnotationsValidator />
+        <MudGrid>
+            <MudItem>
+                <MudCard Style="width:300px; padding:20px;" lg="12" sm="7">
+                    <MudTextField Label="First Name" @bind-Value="EditUserModel.Name" For="@(() => EditUserModel.Name)" />
+                    <MudTextField Label="Email" Class="mt-3"
+                    @bind-Value="EditUserModel.Email" For="@(() => EditUserModel.Email)" />
+                     @* <MudDatePicker @bind-Date="EditUserModel.NgaySinh" Label="Parameter Label" />  *@
+                    <MudCardActions>
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" OnClick="Updateuser" Class="ml-auto">Sửa</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudOverlay>
+
+
+@code {
+
+    [Parameter]
+    public bool showFormSua { get; set; }
+
+    [Parameter]
+    public User EditUserModel { get; set; }
+
+    [Parameter]
+    public EventCallback OnFormSuaClosed { get; set; }
+
+    private void OnOverlayClosed(EventArgs args)
+    {
+        showFormSua = false;
+        OnFormSuaClosed.InvokeAsync();
+    }
+   
+    private void close()
+    {
+        showFormSua = false;
+        OnFormSuaClosed.InvokeAsync();
+    }
+   
+    private async Task Updateuser()
+    {
+        await _createUser.UpdateUser(EditUserModel);
+        showFormSua = false;
+        OnFormSuaClosed.InvokeAsync();
+    }
+}
